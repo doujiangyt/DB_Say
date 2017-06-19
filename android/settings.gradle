@@ -1,0 +1,7 @@
+rootProject.name = 'DB_Say'
+
+include ':app'
+
+//这里是添加react-native-vector-icons库的配置
+include ':react-native-vector-icons'
+project(':react-native-vector-icons').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-vector-icons/android')
