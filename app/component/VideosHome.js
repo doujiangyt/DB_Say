@@ -2,26 +2,30 @@
  * Created by admin on 2017/6/19.
  */
 import React,{Component} from 'react';
-
+import {
+    Image,
+    StyleSheet,
+}from 'react-native'
 import {
     TabNavigator,
 }from 'react-navigation';
 import VideosScene from '../scene/VideosScene';
 import DubScene from '../scene/DubScene';
 import AccountScene from '../scene/AccountScene';
-import Icon from 'react-native-vector-icons/FontAwesome';
-
-
-
-
+let videoIcon = require('../img/video.png')
+let videoPressedIcon = require('../img/video_pressed.png')
+let plusIcon = require('../img/plus.png')
+let plusPressedIcon = require('../img/plus_pressed.png')
+let moreIcon = require('../img/more.png')
+let morePressedIcon = require('../img/more_pressed.png')
 const VideosHome = TabNavigator({
     Videos: {
         screen: VideosScene,
         navigationOptions: {
             tabBarIcon: ({focused, tintColor}) => (
-                <Icon
-                    name='ios-videocam-outline'
-                    color={focused ? '#ff8857' : '#ffffff'}
+                <Image
+                    source={focused ? videoPressedIcon : videoIcon}
+                    style = {[styles.imageIcon,{width:26,height:26}]}
                 />
             ),
         },
@@ -30,10 +34,9 @@ const VideosHome = TabNavigator({
         screen:DubScene,
         navigationOptions:{
             tabBarIcon:({focused,tintColor})=>(
-                <Icon
-                    name='ios-plus-outline'
-                    color={focused ? '#ff8857' : '#ffffff'}
-
+                <Image
+                    source={focused ? plusPressedIcon : plusIcon}
+                    style = {[styles.imageIcon,{width:26,height:26}]}
                 />
             )
         }
@@ -42,9 +45,9 @@ const VideosHome = TabNavigator({
         screen:AccountScene,
         navigationOptions:{
             tabBarIcon:({focused,tintColor})=>(
-                <Icon
-                    name='ios-plus-outline'
-                    color={focused ? '#ff8857' : '#ffffff'}
+                <Image
+                    source={focused ? morePressedIcon : moreIcon}
+                    style = {[styles.imageIcon,{width:26,height:26}]}
                 />
             )
         }
@@ -59,7 +62,7 @@ const VideosHome = TabNavigator({
         style: {
             height: 50,
             borderTopWidth: 0.5,
-            borderColor: '#DDDDDD',
+            borderColor: '#dddddd',
             backgroundColor: '#FFFFFF',
         },
         showLabel: false,//不显示文字
@@ -69,5 +72,10 @@ const VideosHome = TabNavigator({
         },
     }
 });
+let styles = StyleSheet.create({
+    imageIcon:{
+        resizeMode:'cover',
+    }
+})
 
 export default VideosHome;
