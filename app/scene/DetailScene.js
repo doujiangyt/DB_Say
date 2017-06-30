@@ -312,8 +312,8 @@ export default class DetailScene extends Component{
            <View style={styles.container}>
                    <TouchableWithoutFeedback onPress={this._pausedMovie.bind(this)}>
                        <View style={[styles.movieContent,this.state.clickScreenShowShade ? {opacity:0.7}:null]}>
-                        <Video source={//{uri:data.video}
-                                require('../video/wx_camera.mp4')
+                        <Video source={{uri:data.video}
+                                //require('../video/wx_camera.mp4')
                                         } // Looks for .mp4 file (background.mp4) in the given expansion version.
                                ref={'videoPlayer'}
                                rate={this.state.rate}                   //

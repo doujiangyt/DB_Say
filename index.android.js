@@ -6,7 +6,6 @@
 
 import React, { Component } from 'react';
 import AppNav from './app/navigator/AppNav';
-import TestVideos from './app/test/TestVideos'
 import {
     AppRegistry,
 } from 'react-native';
