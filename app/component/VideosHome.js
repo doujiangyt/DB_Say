@@ -1,14 +1,15 @@
 /**
  * Created by admin on 2017/6/19.
  */
-import React,{Component} from 'react';
+import React from 'react';
 import {
     Image,
     StyleSheet,
 }from 'react-native'
 import {
-    TabNavigator,
+    TabNavigator,TabBarBottom,StackNavigator
 }from 'react-navigation';
+import DetailScene from '../scene/DetailScene'
 import VideosScene from '../scene/VideosScene';
 import DubScene from '../scene/DubScene';
 import AccountScene from '../scene/AccountScene';
@@ -25,7 +26,7 @@ const VideosHome = TabNavigator({
             tabBarIcon: ({focused, tintColor}) => (
                 <Image
                     source={focused ? videoPressedIcon : videoIcon}
-                    style = {[styles.imageIcon,{width:26,height:26}]}
+                    style = {styles.imageIcon}
                 />
             ),
         },
@@ -36,7 +37,7 @@ const VideosHome = TabNavigator({
             tabBarIcon:({focused,tintColor})=>(
                 <Image
                     source={focused ? plusPressedIcon : plusIcon}
-                    style = {[styles.imageIcon,{width:26,height:26}]}
+                    style = {styles.imageIcon}
                 />
             )
         }
@@ -47,12 +48,13 @@ const VideosHome = TabNavigator({
             tabBarIcon:({focused,tintColor})=>(
                 <Image
                     source={focused ? morePressedIcon : moreIcon}
-                    style = {[styles.imageIcon,{width:26,height:26}]}
+                    style = {styles.imageIcon}
                 />
             )
         }
     }
 }, {
+    tabBarComponent: TabBarBottom,
     lazy: true,
     initialRouteName: 'Videos',
     tabBarPosition: 'bottom',//tabbar放在底部
@@ -72,10 +74,14 @@ const VideosHome = TabNavigator({
         },
     }
 });
+
 let styles = StyleSheet.create({
     imageIcon:{
         resizeMode:'cover',
+        width:26,
+        height:26,
     }
 })
+
 
 export default VideosHome;

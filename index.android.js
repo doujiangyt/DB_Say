@@ -6,6 +6,7 @@
 
 import React, { Component } from 'react';
 import AppNav from './app/navigator/AppNav';
+import TestVideos from './app/test/TestVideos'
 import {
     AppRegistry,
 } from 'react-native';
@@ -15,9 +16,7 @@ class App extends Component{
     }
     render() {
         return(
-            <AppNav
-                screenProps={{navigation: this.props.navigation}}
-                style={{flex: 1,}} />
+            <AppNav/>
         );
     }
 }

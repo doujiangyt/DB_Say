@@ -5,40 +5,37 @@
 import {
     StackNavigator
 }from 'react-navigation'
-import React,{Component} from 'react';
+import React from 'react';
 import VideosHome from '../component/VideosHome';
-import VideosDetailScene from '../scene/VideosScene';
 import ToolBar from '../component/ToolBar'
+import DetailScene from '../scene/DetailScene'
+import VideosScene from '../scene/VideosScene'
+import AccountScene from '../scene/AccountScene'
+import SplashScene from '../scene/SplashScene'
 const AppNav = StackNavigator({
+    SplashPage:{
+      screen:SplashScene,
+    },
     // 对应界面名称
-    Videos: {
+    VideosPage: {
         screen: VideosHome,
+    },
+    DetailPage:{
+        screen:DetailScene,
         navigationOptions:({navigation})=>({
             header:(
                 <ToolBar
-                    rightTitle = ''
-                    hasClick = {false}
-                    hasLeft = {false}
-                    inVideosScene = {true}
-                    navigation={navigation}
-                />
-            ),
-            headerTitle:'逗逼说'
-        })
-    },
-    Detail: {
-        screen: VideosDetailScene,
-        navigationOptions:(navigation)=>({
-            header:(
-                <ToolBar
-                    inVideosScene = {true}
+                    title = '逗逼秀'
+                    rightTitle = '返回'
+                    hasLeft = {true}
                     navigation={navigation}
                 />
             )
         })
     },
 }, {
-    headerMode: 'screen',
+    headerMode:'screen',
+    initialRouteName:'SplashPage',
 });
 
 export default AppNav;
