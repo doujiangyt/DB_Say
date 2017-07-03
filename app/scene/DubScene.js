@@ -24,7 +24,6 @@ export default class DubScene extends Component{
 
     constructor(props){
         super(props);
-        console.log('路由的名字是：'+this.props.navigation.state.routeName)
     }
 
     _uploadVideo(){

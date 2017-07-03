@@ -14,7 +14,7 @@ import {
     Modal,
     TouchableWithoutFeedback,
 } from 'react-native';
-import {CountDownText} from 'react-native-sk-countdown'
+
 import CustomButton from '../component/CustomButton'
 import Video from 'react-native-video'
 import request from '../common/request'
@@ -26,7 +26,8 @@ let playIcon = require('../img/play.png')
 let pauseIconT = require('../img/pauseT.png')
 let playIconT = require('../img/playT.png')
 let fullScreen = require('../img/fullScreen.png')
-
+let volume = require('../img/volume.png')
+let volumeMute = require('../img/volume_mute.png')
 //数据缓存
 let cachedResults = {
     nextPage:1,
@@ -46,6 +47,10 @@ export default class DetailScene extends Component{
             resizeMode:'cover',
             repeat:false,
 
+            //是否有声音
+            volume:1,
+            isVolume:true,
+
             videoLoaded:false, //视频是否加载完成
             loadFailed:false,
             isRePlay:false,//是否重复播放
@@ -55,11 +60,11 @@ export default class DetailScene extends Component{
             percent:0.01,
             currentTime:0,
             duration:0,
-
             //min&sec
-            min:0,
-            sec:0,
-
+            min:'00',
+            sec:'00',
+            videoMin:'00',
+            videoSec:'00',
             //ListView部分
             dataSource:ds.cloneWithRows([]),
             isLoadingTail:false,
@@ -69,8 +74,142 @@ export default class DetailScene extends Component{
             isSending:false,
             comments:'',
             modalVisible:false,
+
         }
     }
+
+    render(){
+        let data = this.props.navigation.state.params.rowData
+        return(
+            <View style={styles.container}>
+                <TouchableWithoutFeedback onPress={this._pausedMovie.bind(this)}>
+                    <View style={[styles.movieContent,this.state.clickScreenShowShade ? {opacity:0.7}:null]}>
+                        <Video source={//{uri:data.video}
+                            require('../video/wx_camera.mp4')
+                        } // Looks for .mp4 file (background.mp4) in the given expansion version.
+                               ref={'videoPlayer'}
+                               rate={this.state.rate}                   //
+                               volume={this.state.volume}                 // 0 is muted, 1 is normal.
+                               muted={this.state.muted}                // 是否静音
+                               paused={this.state.isPaused}               // Pauses playback entirely.
+                               resizeMode={this.state.resizeMode}          // Fill the whole screen at aspect ratio.
+                               repeat={this.state.repeat}                // 是否重复播放
+                               style={styles.backgroundVideo}
+
+                               onLoadStart={this._onLoadStart.bind(this)} // Callback when video starts to load
+                               onLoad={this._onLoad.bind(this)}    // Callback when video loads
+                               onProgress={this._onProgress.bind(this)}    // Callback every ~250ms with currentTime
+                               onEnd={this._onEnd.bind(this)}           // Callback when playback finishes
+                               onError={this._onError.bind(this)}    // Callback when video cannot be loaded
+                        />
+                        {
+                            this.state.clickScreenShowShade ?
+                                <View style={styles.stateContainer}>
+                                    <View style={styles.playStateBox}>
+                                        <TouchableWithoutFeedback onPress={this._playAndPause.bind(this)}>
+                                            <Image style={styles.playState} source={this.state.isPaused ? playIconT : pauseIconT}/>
+                                        </TouchableWithoutFeedback>
+                                    </View>
+
+                                    <Text style={styles.cd}>{this.state.videoMin}:{this.state.videoSec}</Text>
+
+                                    <View style={styles.progressBoxT}>
+                                        <View style={[styles.progressT,{width:width*0.5*this.state.percent}]}/>
+                                    </View>
+
+                                    <Text style={styles.totalTime}>{this.state.min}:{this.state.sec}</Text>
+
+                                    <View style={styles.volumeBox}>
+                                        <TouchableWithoutFeedback onPress={this._volumeBox.bind(this)}>
+                                            <Image style={styles.volumeImage} source={this.state.isVolume ? volume:volumeMute}/>
+                                        </TouchableWithoutFeedback>
+                                    </View>
+
+                                    <View style={styles.fullScreenBox}>
+                                        <TouchableWithoutFeedback onPress={this._fullScreen.bind(this)}>
+                                            <Image style={styles.fullScreen} source={fullScreen}/>
+                                        </TouchableWithoutFeedback>
+                                    </View>
+                                </View>
+                                :null
+                        }
+                        {
+                            //加载视频失败的容错机制
+                            this.state.loadFailed ?
+                                <View style={styles.loadFailedBox}>
+                                    <Text style={styles.loadFaildText}>视频加载出错了,请稍后重试</Text>
+                                </View>
+                                :null
+                        }
+                        {
+                            //加载图
+                            !this.state.videoLoaded &&
+                            <View style={styles.videoPre}>
+                                <ActivityIndicator/>
+                            </View>
+                        }
+                        {
+                            this.state.isPaused && this.state.videoLoaded ?
+                                <TouchableWithoutFeedback onPress={this._rePlay.bind(this)}>
+                                    <View style={styles.pauseIconContainer}>
+                                        <Image style={styles.pauseIcon} source={playIcon}/>
+                                    </View>
+                                </TouchableWithoutFeedback>
+                                :null
+                        }
+                    </View>
+                </TouchableWithoutFeedback>
+                <ListView
+                    dataSource={this.state.dataSource}
+                    renderRow={(rowData) => this._renderRow(rowData)}
+                    onEndReachedThreshold={20}
+                    renderHeader={this._renderHeader.bind(this)}
+                    onEndReached={this._fetchMoreData.bind(this)}
+                    renderFooter={this._renderFooter.bind(this)}
+                    showsVerticalScrollIndicator={false} //隐藏滑动条
+                    enableEmptySections={true}
+                />
+
+                <Modal
+                    animationType={"fade"}
+                    transparent={false}
+                    visible={this.state.modalVisible}
+                    onRequestClose={()=>{this._closeComment.bind(this)}}>
+
+                    <View style={styles.commentContainer}>
+                        <TouchableWithoutFeedback onPress={this._closeComment.bind(this)}>
+                            <Image style={styles.closeImage} source={closeIcon}/>
+                        </TouchableWithoutFeedback>
+                        <View style={styles.commentArea}>
+                            <Text style={styles.commentTitles}>评论一个</Text>
+                            <TextInput
+                                style={styles.inPut}
+                                multiline={true}
+                                numberOfLines={5}
+                                autoFocus={true}        //自动获取焦点
+                                placeholder='快夸赞一下这个逗逼...' //占位符
+                                returnKeyType='send'
+                                underlineColorAndroid='transparent'
+                                defaultValue='评论'
+                                onChangeText={(comments)=>{        //当输入框中的文字发生改变时，将改变后的值赋值给初始的comments
+                                    this.setState({
+                                        comments
+                                    })
+                                }}
+                            />
+                        </View>
+                        <CustomButton
+                            name='评论'
+                            width={width*0.9}
+                            onPress={()=>this._commitComment()}
+                        />
+                    </View>
+                </Modal>
+            </View>
+        );
+    }
+
+
     _pausedMovie(){
         //点击后暂停播放视频
         console.log('点击了屏幕')
@@ -79,22 +218,22 @@ export default class DetailScene extends Component{
         })
 
     }
+    //弹出modal
     _popupModal(){
         console.log('有焦点了')
-        //弹出modal
         this.setState({
             modalVisible:true,
         })
     }
+    //关闭modal
     _closeComment(){
-        //关闭modal
         this.setState({
             modalVisible:false,
         })
     }
+    //点击提交评论,提交完成后关闭modal
     _commitComment(){
         console.log('点击了评论')
-        //点击提交评论,提交完成后关闭modal
         if(this.state.isSending){  //如果当前正在评论就直接返回
             alert('正在评论中,请稍后...')
             return
@@ -134,15 +273,16 @@ export default class DetailScene extends Component{
                     })
                 })
         })
-
         this._closeComment()
     }
+    //video开始下载
     _onLoadStart(){
         console.log('_onLoadStart..')
         this.setState({
             loadFailed:false,
         })
     }
+    //video下载完成
     _onLoad(){
         console.log('_onLoad..')
         if(!this.state.videoLoaded){
@@ -150,11 +290,15 @@ export default class DetailScene extends Component{
                 videoLoaded:true,
             })
         }
+        this._startTimer()
     }
+
     _onProgress(data){
         let currentTime = data.currentTime
         let duration = data.playableDuration
         let percent = Number((currentTime/duration).toFixed(2))
+        let min = Number((duration/60).toFixed(0))
+        min = min <10 ?`0${min}`:min
         this.setState({
             isRePlay:false,
             isPlaying:true,
@@ -162,7 +306,7 @@ export default class DetailScene extends Component{
             currentTime:Number(currentTime.toFixed(2)),
             percent:percent,
             //得到duration后，将之转化为分+秒的格式
-            min:Number((duration/60).toFixed(0)),
+            min:min,
             sec:Number((duration%60).toFixed(0))
         })
     }
@@ -183,30 +327,97 @@ export default class DetailScene extends Component{
             loadFailed:true,
         })
     }
+    //重新播放
     _rePlay(){
         console.log('点击了rePlay')
         this.setState({
-            isPaused:!this.state.isPaused
+            isPaused:!this.state.isPaused,
+            videoSec:'00',
+            videoMin:'00',
         })
         if(this.state.isRePlay){
             this.refs.videoPlayer.seek(0)
         }
+        this._startTimer()
     }
-
+    //点击了遮罩框的播放和暂停按钮
     _playAndPause(){
         console.log('点击了播放&暂停')
         this.setState({
             isPaused:!this.state.isPaused
         })
+        if(this.state.isPaused){
+            this.setState({
+                videoMin:'00',
+                videoSec:'00'
+            })
+
+        }
         if(this.state.isRePlay){
             this.refs.videoPlayer.seek(0)
+            this._startTimer()
         }
     }
+    //点击后是否静音
+    _volumeBox(){
+        this.setState({
+            isVolume:!this.state.isVolume
+        })
+        !this.state.isVolume ?
+            this._startVolume():this._stopVolume()
+    }
+    //开启声音
+    _startVolume(){
+        this.setState({
+            volume:1,
+        })
+    }
+    //关闭声音
+    _stopVolume(){
+        this.setState({
+            volume:0,
+        })
+    }
+    //全屏
     _fullScreen(){
         console.log('点击了全屏')
         this.refs.videoPlayer.presentFullscreenPlayer();
     }
+    //开启定时器
+    _startTimer(){
+        //自动计时
+        this.setIntervar = setInterval(()=>{
+            let secTime = ++this.state.videoSec;
+            let minTime = this.state.videoMin;
+            if(secTime < 10){
+                secTime = '0' + secTime;
+            }
+            if (secTime > 59){
+                minTime++;
+                if (minTime < 9){
+                    minTime = '0' + minTime++;
+                } else {
+                    minTime = minTime++;
+                }
+                secTime = '00';
+            }
+            let videoTime = minTime + ':' + secTime;
+            let videoAllTime = this.state.min + ':' + this.state.sec
 
+            //更新状态机
+            this.setState({
+                videoSec:secTime,
+                videoMin:minTime,
+            });
+            if (videoTime === videoAllTime){
+                this._stopTimer();
+            }
+        },1000);
+    }
+    // 关闭定时器
+    _stopTimer(){
+        this.setIntervar && clearInterval(this.setIntervar);
+    }
     //ListView部分
     _renderRow(rowData){
         return(
@@ -223,7 +434,7 @@ export default class DetailScene extends Component{
     componentDidMount(){
         this._fetchData()
     }
-
+    //加载数据
     _fetchData(){
         let that = this
         this.setState({
@@ -258,7 +469,7 @@ export default class DetailScene extends Component{
             })
             .done();
     }
-
+    //ListView的Header
     _renderHeader(){
         let data = this.props.navigation.state.params.rowData
         return (
@@ -282,16 +493,18 @@ export default class DetailScene extends Component{
             </View>
         )
     }
-
+    //是否还有更多数据
     _hasMore(){
         return cachedResults.items.length !== cachedResults.total
     }
+    //加载更多数据
     _fetchMoreData(){
         if(!this._hasMore() || this.state.isLoadingTail){  //如果没有更多数据或者正在刷新的时候
             return
         }
         this._fetchData()
     }
+    //ListView的footer
     _renderFooter(){
         return (
             !this._hasMore() && !this.state.isLoadingTail?
@@ -303,136 +516,6 @@ export default class DetailScene extends Component{
                 <Text style={styles.loadingMoreText}>正在刷新中...</Text>
             </View>
         )
-    }
-
-    render(){
-       let data = this.props.navigation.state.params.rowData
-        console.log('nickname:'+data.author.nickname)
-       return(
-           <View style={styles.container}>
-                   <TouchableWithoutFeedback onPress={this._pausedMovie.bind(this)}>
-                       <View style={[styles.movieContent,this.state.clickScreenShowShade ? {opacity:0.7}:null]}>
-                        <Video source={{uri:data.video}
-                                //require('../video/wx_camera.mp4')
-                                        } // Looks for .mp4 file (background.mp4) in the given expansion version.
-                               ref={'videoPlayer'}
-                               rate={this.state.rate}                   //
-                               volume={5}                 // 0 is muted, 1 is normal.
-                               muted={this.state.muted}                // 是否静音
-                               paused={this.state.isPaused}               // Pauses playback entirely.
-                               resizeMode={this.state.resizeMode}          // Fill the whole screen at aspect ratio.
-                               repeat={this.state.repeat}                // 是否重复播放
-                               style={styles.backgroundVideo}
-
-                               onLoadStart={this._onLoadStart.bind(this)} // Callback when video starts to load
-                               onLoad={this._onLoad.bind(this)}    // Callback when video loads
-                               onProgress={this._onProgress.bind(this)}    // Callback every ~250ms with currentTime
-                               onEnd={this._onEnd.bind(this)}           // Callback when playback finishes
-                               onError={this._onError.bind(this)}    // Callback when video cannot be loaded
-                            />
-                           {
-                               this.state.clickScreenShowShade ?
-                               <View style={styles.stateContainer}>
-                                   <View style={styles.playStateBox}>
-                                       <TouchableWithoutFeedback onPress={this._playAndPause.bind(this)}>
-                                            <Image style={styles.playState} source={this.state.isPaused ? playIconT : pauseIconT}/>
-                                       </TouchableWithoutFeedback>
-                                   </View>
-                                   <CountDownText // 倒计时
-                                       style={styles.cd}
-                                       countType='date' // 计时类型：seconds / date
-                                       auto={true} // 自动开始
-                                       afterEnd={() => {}} // 结束回调
-                                       timeLeft={0} // 正向计时 时间起点为0秒
-                                       step={1} // 计时步长，以秒为单位，正数则为正计时，负数为倒计时
-                                       intervalText={(min, sec) =>  min + ':' + sec} // 定时的文本回调
-                                   />
-                                   <View style={styles.progressBoxT}>
-                                       <View style={[styles.progressT,{width:width*0.5*this.state.percent}]}/>
-                                   </View>
-                                   <Text style={styles.totalTime}>{this.state.min}:{this.state.sec}</Text>
-                                   <View style={styles.fullScreenBox}>
-                                       <TouchableWithoutFeedback onPress={this._fullScreen.bind(this)}>
-                                            <Image style={styles.fullScreen} source={fullScreen}/>
-                                       </TouchableWithoutFeedback>
-                                   </View>
-                               </View>
-                               :null
-                           }
-                           {
-                               //加载视频失败的容错机制
-                               this.state.loadFailed ?
-                                   <View style={styles.loadFailedBox}>
-                                       <Text style={styles.loadFaildText}>视频加载出错了,请稍后重试</Text>
-                                   </View>
-                                   :null
-                           }
-                           {
-                               //加载图
-                               !this.state.videoLoaded &&
-                               <View style={styles.videoPre}>
-                                   <ActivityIndicator/>
-                               </View>
-                           }
-                           {
-                                this.state.isPaused && this.state.videoLoaded ?
-                                    <TouchableWithoutFeedback onPress={this._rePlay.bind(this)}>
-                                        <View style={styles.pauseIconContainer}>
-                                                <Image style={styles.pauseIcon} source={playIcon}/>
-                                        </View>
-                                    </TouchableWithoutFeedback>
-                                    :null
-                           }
-                       </View>
-                   </TouchableWithoutFeedback>
-                   <ListView
-                       dataSource={this.state.dataSource}
-                       renderRow={(rowData) => this._renderRow(rowData)}
-                       onEndReachedThreshold={20}
-                       renderHeader={this._renderHeader.bind(this)}
-                       onEndReached={this._fetchMoreData.bind(this)}
-                       renderFooter={this._renderFooter.bind(this)}
-                       showsVerticalScrollIndicator={false} //隐藏滑动条
-                       enableEmptySections={true}
-                   />
-
-               <Modal
-                   animationType={"fade"}
-                   transparent={false}
-                   visible={this.state.modalVisible}
-                   onRequestClose={()=>{this._closeComment.bind(this)}}>
-
-                   <View style={styles.commentContainer}>
-                       <TouchableWithoutFeedback onPress={this._closeComment.bind(this)}>
-                           <Image style={styles.closeImage} source={closeIcon}/>
-                       </TouchableWithoutFeedback>
-                       <View style={styles.commentArea}>
-                           <Text style={styles.commentTitles}>评论一个</Text>
-                           <TextInput
-                               style={styles.inPut}
-                               multiline={true}
-                               numberOfLines={5}
-                               autoFocus={true}        //自动获取焦点
-                               placeholder='快夸赞一下这个逗逼...' //占位符
-                               returnKeyType='send'
-                               underlineColorAndroid='transparent'
-                               defaultValue='评论'
-                               onChangeText={(comments)=>{        //当输入框中的文字发生改变时，将改变后的值赋值给初始的comments
-                                   this.setState({
-                                       comments
-                                   })
-                               }}
-                           />
-                       </View>
-                       <CustomButton
-                            name='评论'
-                            width={width*0.9}
-                            onPress={()=>this._commitComment()}
-                       />
-                   </View>
-               </Modal>
-           </View>
-       );
     }
 }
 const styles = StyleSheet.create({
@@ -496,14 +579,26 @@ const styles = StyleSheet.create({
         color:'#fff',
         fontSize:12,
     },
+    volumeBox:{
+        justifyContent:'center',
+        alignItems:'center',
+        flex:0.5,
+    },
+    volumeImage:{
+        width:18,
+        height:18,
+        alignSelf:'center'
+    },
+
     fullScreenBox:{
         justifyContent:'center',
         alignItems:'center',
-        flex:1,
+        flex:0.8,
     },
     fullScreen:{
         width:14,
         height:14,
+        alignSelf:'center'
     },
     //遮罩框部分 --end--
 
@@ -571,7 +666,7 @@ const styles = StyleSheet.create({
         alignItems:'center',
         width:width,
         height:30,
-        justifyContent:'center',
+        justifyContent:'space-between',
     },
     bdBox:{
         justifyContent:'center',

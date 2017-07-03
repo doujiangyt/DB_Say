@@ -74,7 +74,7 @@ export default class VideosScene extends Component{
             {
                 this.state.loadDataFailed ?
                     <View style={styles.failedBox}>
-                        <Image source={failImage} style={styles.fialImage} resizeMethod={'auto'}/>
+                        <Image source={failImage} style={styles.fialImage} resizeMode={'cover'}/>
                     </View>
                     :<ListView
                     dataSource={this.state.dataSource}
@@ -91,8 +91,9 @@ export default class VideosScene extends Component{
                             tintColor="#ff0000"
                             title="拼命加载中..."
                             titleColor="#ff8857"
-                            colors={['#ff0000', '#00ff00', '#0000ff']}
-                            progressBackgroundColor="#ffff00"
+                            colors={['#ff8857']}
+                            //colors={['#ff0000', '#00ff00', '#0000ff']}
+                            //progressBackgroundColor="#ffff00"
                         />
                     }
                 />
@@ -170,7 +171,7 @@ export default class VideosScene extends Component{
         if(!this._hasMore() || this.state.isLoadingTail){  //如果没有更多数据或者正在刷新的时候
             return
         }
-        let page = cachedResults.nextPage
+        let page = cachedResults.nextPage   //下拉刷新的page
         this._fetchData(page)
     }
     _renderFooter(){
@@ -211,7 +212,6 @@ const styles = StyleSheet.create({
         alignSelf:'center',         //这个属性是给子控件用的
     },
     text:{
-
         fontSize:12,
         color:'#ff8857',
         fontWeight:'600',
@@ -224,6 +224,4 @@ const styles = StyleSheet.create({
         color:'#777',
         textAlign:'center'
     }
-
-
 })

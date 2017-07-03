@@ -3,13 +3,8 @@
  */
 import React,{Component} from 'react';
 import {
-    Image,
-    TextInput,
-    ListView,
     Text,
     View,
-    ActivityIndicator,
-    TouchableHighlight,
     StyleSheet,
     Dimensions,
 } from 'react-native';
@@ -25,10 +20,12 @@ export default class SplashScene extends Component{
     }
     constructor(props){
         super(props);
+
     }
     _goApp(){
         this.props.navigation.navigate('VideosPage')
     }
+
     render(){
        return(
             <View style={styles.container}>
@@ -42,11 +39,6 @@ export default class SplashScene extends Component{
                        paused={false}               // Pauses playback entirely.
                        resizeMode="cover"           // Fill the whole screen at aspect ratio.
                        repeat={true}                // Repeat forever.
-                    // onLoadStart={this.loadStart} // Callback when video starts to load
-                    //onLoad={this.setDuration}    // Callback when video loads
-                    //onProgress={this.setTime}    // Callback every ~250ms with currentTime
-                    //onEnd={this.onEnd}           // Callback when playback finishes
-                    //onError={this.videoError}    // Callback when video cannot be loaded
                        style={styles.backgroundVideo}
                 />
                 <View style={styles.textContent}>

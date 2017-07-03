@@ -15,7 +15,9 @@ module.exports ={
         base:'http://rapapi.org/mockjs/21287/',
         creations:'api/creations',
         isLike:'api/isLike',
-        comment:'api/comments'
+        comment:'api/comments',
+        signup:'api/u/signup',
+        verify:'api/verify'
     }
 }
 
