@@ -9,16 +9,12 @@ import {
     TouchableWithoutFeedback,
     StyleSheet,
 } from 'react-native';
-import ToolBar from '../component/ToolBar'
+import DubSceneToolBar from '../component/DubSceneToolBar'
 let videoImage = require('../img/dub.png')
 export default class DubScene extends Component{
     static navigationOptions = {
         header:(
-            <ToolBar
-                title = '进入逗逼的世界'
-                rightTitle = ''
-                hasLeft = {false}
-            />
+            <DubSceneToolBar/>
         ),
     }
 

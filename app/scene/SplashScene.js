@@ -29,7 +29,10 @@ export default class SplashScene extends Component{
     render(){
        return(
             <View style={styles.container}>
-                <Video source={require('../video/splash_video.mp4')} // Looks for .mp4 file (background.mp4) in the given expansion version.
+                <Video source={
+                    require('../.././android/app/src/main/res/raw/splash_video.mp4')
+                    //{uri: "splash_video", mainVer: 1, patchVer: 0}
+                } // Looks for .mp4 file (background.mp4) in the given expansion version.
                        ref={(ref) => {
                            this.video = ref
                        }}

@@ -83,7 +83,7 @@ const AppStackNavigator = StackNavigator({
         navigationOptions:({navigation})=>({
             header:(
                 <ToolBar
-                    title = '逗逼秀'
+                    title = '逗逼的日常'
                     rightTitle = '返回'
                     hasLeft = {true}
                     navigation={navigation}

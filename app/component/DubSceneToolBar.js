@@ -1,15 +1,10 @@
 /**
- * Created by admin on 2017/6/26.
+ * Created by ${豆浆} on 2017/7/4.
  */
 import React,{Component} from 'react';
 import {
-    Image,
-    TextInput,
-    ListView,
     Text,
     View,
-    ActivityIndicator,
-    TouchableHighlight,
     StyleSheet,
     Dimensions,
 } from 'react-native';
@@ -20,11 +15,11 @@ export default class VideoSceneToolBar extends Component{
     }
 
     render(){
-       return(
-           <View style={styles.container}>
-               <Text style={styles.title}>逗逼秀</Text>
-           </View>
-       );
+        return(
+            <View style={styles.container}>
+                <Text style={styles.title}>逗比的日常</Text>
+            </View>
+        );
     }
 }
 const styles = StyleSheet.create({

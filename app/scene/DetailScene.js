@@ -13,8 +13,8 @@ import {
     ActivityIndicator,
     Modal,
     TouchableWithoutFeedback,
+    Slider
 } from 'react-native';
-
 import CustomButton from '../component/CustomButton'
 import Video from 'react-native-video'
 import request from '../common/request'
@@ -46,6 +46,8 @@ export default class DetailScene extends Component{
             muted:false,
             resizeMode:'cover',
             repeat:false,
+
+            value:0,
 
             //是否有声音
             volume:1,
@@ -85,7 +87,8 @@ export default class DetailScene extends Component{
                 <TouchableWithoutFeedback onPress={this._pausedMovie.bind(this)}>
                     <View style={[styles.movieContent,this.state.clickScreenShowShade ? {opacity:0.7}:null]}>
                         <Video source={//{uri:data.video}
-                            require('../video/wx_camera.mp4')
+                            require('../.././android/app/src/main/res/raw/wx_camera.mp4')
+                            //{uri: "wx_camera", mainVer: 1, patchVer: 0}
                         } // Looks for .mp4 file (background.mp4) in the given expansion version.
                                ref={'videoPlayer'}
                                rate={this.state.rate}                   //
@@ -113,9 +116,18 @@ export default class DetailScene extends Component{
 
                                     <Text style={styles.cd}>{this.state.videoMin}:{this.state.videoSec}</Text>
 
-                                    <View style={styles.progressBoxT}>
+                                    {/*<View style={styles.progressBoxT}>
                                         <View style={[styles.progressT,{width:width*0.5*this.state.percent}]}/>
-                                    </View>
+                                    </View>*/}
+                                    <Slider
+                                        style={styles.slider}
+                                        value={this.state.value}
+                                        onValueChange={(value)=>this._onValueChange(value)}
+                                        minimumTrackTintColor={'#ff8857'}
+                                        maximumTrackTintColor={'#ff8857'}
+                                        thumbTintColor={'#fff'}
+                                        thumbStyle={styles.thumbStyle}
+                                    />
 
                                     <Text style={styles.totalTime}>{this.state.min}:{this.state.sec}</Text>
 
@@ -208,8 +220,78 @@ export default class DetailScene extends Component{
             </View>
         );
     }
+    _changeTimes(min,sec){
+        if(sec < 10){
+            sec = '0' + sec;
+        }
+        if (sec > 59){
+            min++;
+            if (min < 9){
+                min = '0' + min++;
+            } else {
+                min = min++;
+            }
+            sec = '00';
+        }
+        this.setState({
+            videoMin:min,
+            videoSec:sec
+        })
+    }
 
+    _onValueChange(value){
+        let duration = this.state.duration
+        let videoMin = Math.trunc((duration*value/60))
+        let videoSec = Number((duration*value%60).toFixed(0))
+        this._changeTimes(videoMin,videoSec)
+        this.setState({
+            value:value,
+            isPaused:false,
+            //播放时间就等于总时长*value值
+            //videoMin:videoMin,
+            //videoSec:videoSec
+        })
+        if(this.reIntervar){
+            this.reIntervar && clearInterval(this.reIntervar)
+        }
+        if(this.setIntervar){
+            this._stopTimer()
+        }
+        //然后就是从这个时间开始计时
+        this.reIntervar = setInterval(()=>{
+            let secTime = ++this.state.videoSec;
+            let minTime = this.state.videoMin;
 
+            if(secTime < 10){
+                secTime = '0' + secTime;
+            }
+            if (secTime > 59){
+                minTime++;
+                if (minTime < 9){
+                    minTime = '0' + minTime++;
+                } else {
+                    minTime = minTime++;
+                }
+                secTime = '00';
+            }
+            let videoTime = minTime * 60 + secTime;
+            let videoAllTime = Number(this.state.duration.toFixed(0))
+
+            if(videoTime > videoAllTime){
+                this.reIntervar && clearInterval(this.reIntervar)
+            }
+            //更新状态机
+            this.setState({
+                videoSec:secTime,
+                videoMin:minTime,
+            });
+
+        },1000);
+
+        //指向滚动条的位置播放
+        this.refs.videoPlayer.seek(value)
+
+    }
     _pausedMovie(){
         //点击后暂停播放视频
         console.log('点击了屏幕')
@@ -293,11 +375,13 @@ export default class DetailScene extends Component{
         this._startTimer()
     }
 
+
     _onProgress(data){
         let currentTime = data.currentTime
         let duration = data.playableDuration
         let percent = Number((currentTime/duration).toFixed(2))
-        let min = Number((duration/60).toFixed(0))
+        //let min = Number((duration/60).toFixed(0))
+        let min = Math.trunc(duration/60)
         min = min <10 ?`0${min}`:min
         this.setState({
             isRePlay:false,
@@ -305,21 +389,49 @@ export default class DetailScene extends Component{
             duration:duration,
             currentTime:Number(currentTime.toFixed(2)),
             percent:percent,
+            value:percent,
             //得到duration后，将之转化为分+秒的格式
             min:min,
             sec:Number((duration%60).toFixed(0))
         })
     }
     _onEnd(){
+        //原则是分钟取舍，秒钟取入
         console.log('_onEnd..')
+        let duration = this.state.duration
+        let videoMin = Math.trunc(duration/60)
+        let videoSec = Number((duration%60).toFixed(0))
+
+        if(videoSec < 10){
+            videoSec = '0' + videoSec;
+        }
+        if (videoSec > 59){
+            videoMin++;
+            if (videoMin < 9){
+                videoMin = '0' + videoMin++;
+            } else {
+                videoMin = videoMin++;
+            }
+            videoSec = '00';
+        }
         this.setState({
             percent:1,
+            value:1,
             isPaused:true,
             isRePlay:true,
             isPlaying:false,
-            clickScreenShowShade:true
-        })
+            clickScreenShowShade:true,
 
+            videoMin:this.state.min,
+            videoSec:this.state.sec
+        })
+        //在播放结束时，时间都要对上，且要停止自动计时
+        if(this.setIntervar){
+            this._stopTimer()
+        }
+        if(this.reIntervar){
+            this.reIntervar && clearInterval(this.reIntervar)
+        }
     }
     _onError(){
         console.log('_onError..')
@@ -351,7 +463,6 @@ export default class DetailScene extends Component{
                 videoMin:'00',
                 videoSec:'00'
             })
-
         }
         if(this.state.isRePlay){
             this.refs.videoPlayer.seek(0)
@@ -385,6 +496,10 @@ export default class DetailScene extends Component{
     }
     //开启定时器
     _startTimer(){
+        //每次开启之前都清空一下计时器
+        if(this.setIntervar){
+            this._stopTimer()
+        }
         //自动计时
         this.setIntervar = setInterval(()=>{
             let secTime = ++this.state.videoSec;
@@ -401,17 +516,17 @@ export default class DetailScene extends Component{
                 }
                 secTime = '00';
             }
-            let videoTime = minTime + ':' + secTime;
-            let videoAllTime = this.state.min + ':' + this.state.sec
+            let videoTime = minTime * 60 + secTime;
+            let videoAllTime = Number(this.state.duration.toFixed(0))
 
+            if(videoTime > videoAllTime){
+                this._stopTimer()
+            }
             //更新状态机
             this.setState({
                 videoSec:secTime,
                 videoMin:minTime,
             });
-            if (videoTime === videoAllTime){
-                this._stopTimer();
-            }
         },1000);
     }
     // 关闭定时器
@@ -562,6 +677,16 @@ const styles = StyleSheet.create({
         textAlign:'center',
         color:'#fff',
         fontSize:12,
+    },
+    slider:{
+        width:width*0.5,
+    },
+    thumbStyle:{
+        width:1,
+        height:1,
+        borderWidth:3,
+        borderRadius:6,
+        borderColor:'#fff'
     },
     progressBoxT:{
         flex:4,
@@ -761,7 +886,7 @@ const styles = StyleSheet.create({
     },
     loadingMoreText:{
         color:'#777',
-        textAlign:'center'
+        textAlign:'center',
     },
 
     //modal弹窗部分
